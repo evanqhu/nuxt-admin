@@ -1,15 +1,15 @@
 <script setup lang="ts">
-import { addProject } from '~/api/projects'
-import ProjectForm from './ProjectForm.vue'
+import { addAdsenseAccount } from '~/api/adsense'
+import AdsenseForm from './AdsenseForm.vue'
 
 const emit = defineEmits(['refresh'])
 const open = ref(false)
 const toast = useToast()
 
-async function onAdd(data: IProjectAdd) {
+async function onAdd(data: IAdsenseAdd) {
   try {
-    await addProject(data)
-    toast.add({ title: 'Success', description: `New project ${data.project_name} added`, color: 'success' })
+    await addAdsenseAccount(data)
+    toast.add({ title: 'Success', description: `New adsense account ${data.account_name} added`, color: 'success' })
     emit('refresh')
   } catch (error: any) {
     console.error(error.data.message)
@@ -26,13 +26,12 @@ function onCancel() {
 <template>
   <UModal
     v-model:open="open"
-    title="新增项目"
-    description="新增一个主题项目，如： 游戏模板 1"
+    title="新增 Adsense 账号"
     :ui="{ content: 'max-w-xl' }"
   >
-    <UButton label="新增项目" icon="i-uil-plus" />
+    <UButton label="新增 Adsense 账号" icon="i-uil-plus" />
     <template #body>
-      <ProjectForm @submit="onAdd" @cancel="onCancel" />
+      <AdsenseForm @submit="onAdd" @cancel="onCancel" />
     </template>
   </UModal>
 </template>

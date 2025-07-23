@@ -1,19 +1,19 @@
 <script setup lang="ts">
-import { editProject } from '~/api/projects'
-import ProjectForm from './ProjectForm.vue'
+import { editAdsenseAccount } from '~/api/adsense'
+import AdsenseForm from './AdsenseForm.vue'
 
-const { project } = defineProps<{
-  project: ProjectItem
+const { adsenseAccount } = defineProps<{
+  adsenseAccount: AdsenseItem
 }>()
 
 const openModel = defineModel<boolean>('open', { required: true })
 const emit = defineEmits(['refresh'])
 const toast = useToast()
 
-async function onEdit(data: ProjectItem) {
+async function onEdit(data: AdsenseItem) {
   try {
-    await editProject({ ...data, project_id: project.project_id })
-    toast.add({ title: 'Success', description: `Project ${data.project_name} updated`, color: 'success' })
+    await editAdsenseAccount({ ...data, account_id: adsenseAccount.account_id })
+    toast.add({ title: 'Success', description: `Adsense account ${data.account_name} updated`, color: 'success' })
     emit('refresh')
   } catch (error: any) {
     console.error(error.data.message)
@@ -30,12 +30,11 @@ function onCancel() {
 <template>
   <UModal
     v-model:open="openModel"
-    title="编辑项目"
-    description="编辑当前项目信息"
+    title="编辑 Adsense 账号"
     :ui="{ content: 'max-w-xl' }"
   >
     <template #body>
-      <ProjectForm :initial-data="project" @submit="onEdit" @cancel="onCancel" />
+      <AdsenseForm :initial-data="adsenseAccount" @submit="onEdit" @cancel="onCancel" />
     </template>
   </UModal>
 </template>

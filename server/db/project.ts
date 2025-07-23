@@ -8,15 +8,7 @@ export async function getAllProjects() {
 }
 
 /** 新增一个项目 */
-export async function addProject(projectData: {
-  project_name: string
-  frontend_developer?: string
-  backend_developer?: string
-  domain_options?: string[]
-  ad_slot_options?: string[]
-  repo?: string
-  remark?: string
-}) {
+export async function addProject(projectData: IProjectAdd) {
   try {
     const [inserted] = await db.insert(projects).values(projectData)
     return inserted
@@ -36,14 +28,6 @@ export async function deleteProject(project_id: number | number[]) {
 }
 
 /** 修改一个项目 */
-export async function updateProject(project_id: number, data: Partial<{
-  project_name: string
-  frontend_developer?: string
-  backend_developer?: string
-  domain_options?: string[]
-  ad_slot_options?: string[]
-  repo?: string
-  remark?: string
-}>) {
+export async function updateProject(project_id: number, data: Partial<IProjectAdd>) {
   return await db.update(projects).set(data).where(eq(projects.project_id, project_id))
 }

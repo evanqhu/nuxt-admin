@@ -23,6 +23,14 @@ const links = [
     }
   },
   {
+    label: 'Adsense Accounts',
+    icon: 'i-hugeicons-advertisement',
+    to: '/adsense-accounts',
+    onSelect: () => {
+      open.value = false
+    }
+  },
+  {
     label: 'Customers',
     icon: 'i-lucide-users',
     to: '/customers',

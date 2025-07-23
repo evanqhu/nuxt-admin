@@ -2,7 +2,7 @@
 import type { TableColumn } from '@nuxt/ui'
 import { getPaginationRowModel } from '@tanstack/table-core'
 import type { Row } from '@tanstack/table-core'
-import { deleteProject } from '~/api/projects'
+import { deleteAdsenseAccount } from '~/api/adsense'
 
 const UButton = resolveComponent('UButton')
 const UBadge = resolveComponent('UBadge')
@@ -16,17 +16,17 @@ const table = useTemplateRef('table')
 
 /** 列过滤 */
 const columnFilters = ref([{
-  id: 'project_name',
+  id: 'account_name',
   value: ''
 }])
 
 const columnVisibility = ref() // 列可见性
 const rowSelection = ref({}) // 行选择
 const editModal = ref(false) // 编辑模态框
-const selectedProject = ref<ProjectItem>({} as ProjectItem) // 选中的项目
+const selectedAdsenseAccount = ref<AdsenseItem>({} as AdsenseItem) // 选中的 Adsense 账号
 
 /** 请求数据 */
-const { data, status, error, refresh } = await useFetch<ProjectItem[]>('/api/project/list', {
+const { data, status, error, refresh } = await useFetch<AdsenseItem[]>('/api/adsense/list', {
   lazy: true
 })
 if (error.value) {
@@ -34,32 +34,32 @@ if (error.value) {
 }
 
 /** 操作列项目 */
-function getRowItems(row: Row<ProjectItem>) {
+function getRowItems(row: Row<AdsenseItem>) {
   return [
     {
       type: 'label',
       label: '操作'
     },
     {
-      label: '编辑项目',
+      label: '编辑 Adsense 账号',
       icon: 'i-uil-edit',
       onSelect() {
         editModal.value = true
-        selectedProject.value = row.original
+        selectedAdsenseAccount.value = row.original
       }
     },
     {
       type: 'separator'
     },
     {
-      label: '删除项目',
+      label: '删除 Adsense 账号',
       icon: 'i-uil-trash',
       color: 'error',
       async onSelect() {
-        await deleteProject(row.original.project_id)
+        await deleteAdsenseAccount(row.original.account_id)
         toast.add({
-          title: 'Project deleted',
-          description: 'The project has been deleted.'
+          title: 'Adsense account deleted',
+          description: 'The Adsense account has been deleted.'
         })
         refresh()
       }
@@ -68,7 +68,7 @@ function getRowItems(row: Row<ProjectItem>) {
 }
 
 /** 表格列 */
-const columns: TableColumn<ProjectItem>[] = [
+const columns: TableColumn<AdsenseItem>[] = [
   // 选择列
   {
     id: 'select',
@@ -88,16 +88,16 @@ const columns: TableColumn<ProjectItem>[] = [
         'ariaLabel': 'Select row'
       })
   },
-  // 项目名称
+  // Adsense 账号名称
   {
-    accessorKey: 'project_name',
+    accessorKey: 'account_name',
     header: ({ column }) => {
       const isSorted = column.getIsSorted()
 
       return h(UButton, {
         color: 'neutral',
         variant: 'ghost',
-        label: '项目名称',
+        label: 'Adsense 账号名称',
         icon: isSorted
           ? isSorted === 'asc'
             ? 'i-lucide-arrow-up-narrow-wide'
@@ -113,76 +113,23 @@ const columns: TableColumn<ProjectItem>[] = [
       }
     }
   },
-  // 域名配置
+  // 客户端 ID
   {
-    accessorKey: 'domain_options',
-    header: '域名配置',
-    cell: ({ row }) => {
-      const options = row.original.domain_options || []
-      return h('div', { class: 'flex gap-1 flex-wrap' }, options.map(opt =>
-        h(UBadge, { variant: 'subtle', color: 'primary' }, () => opt)
-      ))
-    },
+    accessorKey: 'client_id',
+    header: '客户端 ID',
     meta: {
       class: {
         th: 'min-w-[100px]'
       }
     }
   },
-  // 广告位
+  // ads.txt 内容
   {
-    accessorKey: 'ad_slot_options',
-    header: '广告位配置',
-    cell: ({ row }) => {
-      // 兼容空值
-      const options = row.original.ad_slot_options || []
-      return h('div', { class: 'flex gap-1 flex-wrap' }, options.map(opt =>
-        h(UBadge, { variant: 'subtle', color: 'secondary' }, () => opt)
-      ))
-    },
+    accessorKey: 'ads_txt',
+    header: 'ads.txt 内容',
     meta: {
       class: {
         th: 'min-w-[120px]'
-      }
-    }
-  },
-  // 仓库地址
-  {
-    accessorKey: 'repo',
-    header: '仓库地址',
-    cell: ({ row }) => {
-      // 只显示最后一个 / 后面的内容
-      const repoUrl = row.original.repo || ''
-      const displayText = repoUrl.substring(repoUrl.lastIndexOf('/') + 1)
-      return h(ULink, {
-        to: repoUrl,
-        target: '_blank',
-        class: 'underline font-bold'
-      }, () => displayText)
-    },
-    meta: {
-      class: {
-        th: 'min-w-[100px]'
-      }
-    }
-  },
-  // 前端开发负责人
-  {
-    accessorKey: 'frontend_developer',
-    header: '前端',
-    meta: {
-      class: {
-        th: 'min-w-[70px]'
-      }
-    }
-  },
-  // 后端开发负责人
-  {
-    accessorKey: 'backend_developer',
-    header: '后端',
-    meta: {
-      class: {
-        th: 'min-w-[70px]'
       }
     }
   },
@@ -227,12 +174,9 @@ const columns: TableColumn<ProjectItem>[] = [
 /** 列名称映射 */
 const COLUMNS_MAP = {
   select: '选择',
-  project_name: '项目名称',
-  domain_options: '域名配置',
-  ad_slot_options: '广告位配置',
-  repo: '仓库地址',
-  frontend_developer: '前端',
-  backend_developer: '后端',
+  account_name: 'Adsense 账号名称',
+  client_id: '客户端 ID',
+  ads_txt: 'ads.txt 内容',
   remark: '备注',
   actions: '操作'
 }
@@ -245,19 +189,19 @@ const pagination = ref({
 </script>
 
 <template>
-  <UDashboardPanel id="projects">
+  <UDashboardPanel id="adsense-accounts">
     <template #header>
-      <UDashboardNavbar title="项目">
+      <UDashboardNavbar title="广告账户">
         <template #leading>
           <UDashboardSidebarCollapse />
         </template>
 
-        <!-- 新增项目 -->
+        <!-- 新增账户 -->
         <template #right>
-          <ProjectsAddModal @refresh="refresh" />
-          <ProjectsEditModal
+          <AdsenseAddModal @refresh="refresh" />
+          <AdsenseEditModal
             v-model:open="editModal"
-            :project="selectedProject"
+            :adsense-account="selectedAdsenseAccount"
             @refresh="refresh"
           />
         </template>
@@ -266,20 +210,20 @@ const pagination = ref({
 
     <template #body>
       <div class="flex flex-wrap items-center justify-between gap-1.5">
-        <!-- 按项目名称搜索 -->
+        <!-- 按 Adsense 账号名称搜索 -->
         <UInput
-          :model-value="(table?.tableApi?.getColumn('project_name')?.getFilterValue() as string)"
+          :model-value="(table?.tableApi?.getColumn('account_name')?.getFilterValue() as string)"
           class="max-w-sm"
           icon="i-uil-search"
-          placeholder="Filter project names..."
-          @update:model-value="table?.tableApi?.getColumn('project_name')?.setFilterValue($event)"
+          placeholder="Filter Adsense account names..."
+          @update:model-value="table?.tableApi?.getColumn('account_name')?.setFilterValue($event)"
         />
 
-        <!-- 批量删除项目的按钮；显示/隐藏列 -->
+        <!-- 批量删除账户的按钮；显示/隐藏列 -->
         <div class="flex flex-wrap items-center gap-1.5">
-          <ProjectsDeleteModal
+          <AdsenseDeleteModal
             :count="table?.tableApi?.getFilteredSelectedRowModel().rows.length"
-            :ids="table?.tableApi?.getFilteredSelectedRowModel().rows.map(row => row.original.project_id)"
+            :ids="table?.tableApi?.getFilteredSelectedRowModel().rows.map(row => row.original.account_id)"
             @refresh="refresh"
           >
             <UButton
@@ -295,7 +239,7 @@ const pagination = ref({
                 </UKbd>
               </template>
             </UButton>
-          </ProjectsDeleteModal>
+          </AdsenseDeleteModal>
           <UDropdownMenu
             :items="
               table?.tableApi

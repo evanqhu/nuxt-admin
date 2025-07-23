@@ -1,10 +1,13 @@
 <script setup lang="ts">
 import type { TableColumn } from '@nuxt/ui'
 import { getPaginationRowModel } from '@tanstack/table-core'
+import type { Row } from '@tanstack/table-core'
+import { deleteProject } from '~/api/projects'
 import type { Project } from '~/types'
 
 const UButton = resolveComponent('UButton')
 const UBadge = resolveComponent('UBadge')
+const UDropdownMenu = resolveComponent('UDropdownMenu')
 const UCheckbox = resolveComponent('UCheckbox')
 const ULink = resolveComponent('ULink')
 const toast = useToast()
@@ -18,12 +21,47 @@ const columnFilters = ref([{
 
 const columnVisibility = ref()
 const rowSelection = ref({})
+const editModal = ref(false)
+const selectedProject = ref<Project>({} as Project)
 
 const { data, status, error, refresh } = await useFetch<Project[]>('/api/project/list', {
   lazy: true
 })
 if (error.value) {
   toast.add({ title: 'Error', description: error.value.data.message, color: 'error' })
+}
+
+function getRowItems(row: Row<Project>) {
+  return [
+    {
+      type: 'label',
+      label: '操作'
+    },
+    {
+      label: '编辑项目',
+      icon: 'i-uil-edit',
+      onSelect() {
+        editModal.value = true
+        selectedProject.value = row.original
+      }
+    },
+    {
+      type: 'separator'
+    },
+    {
+      label: '删除项目',
+      icon: 'i-uil-trash',
+      color: 'error',
+      async onSelect() {
+        await deleteProject(row.original.project_id)
+        toast.add({
+          title: 'Project deleted',
+          description: 'The project has been deleted.'
+        })
+        refresh()
+      }
+    }
+  ]
 }
 
 /** 表格列 */
@@ -119,6 +157,32 @@ const columns: TableColumn<Project>[] = [
         th: 'min-w-[100px]'
       }
     }
+  },
+  // 操作
+  {
+    id: 'actions',
+    cell: ({ row }) => {
+      return h(
+        'div',
+        { class: 'text-right' },
+        h(
+          UDropdownMenu,
+          {
+            content: {
+              align: 'end'
+            },
+            items: getRowItems(row)
+          },
+          () =>
+            h(UButton, {
+              icon: 'i-lucide-ellipsis-vertical',
+              color: 'neutral',
+              variant: 'ghost',
+              class: 'ml-auto'
+            })
+        )
+      )
+    }
   }
 ]
 
@@ -139,6 +203,11 @@ const pagination = ref({
         <!-- 新增项目 -->
         <template #right>
           <ProjectsAddModal @refresh="refresh" />
+          <ProjectsEditModal
+            v-model:open="editModal"
+            :project="selectedProject"
+            @refresh="refresh"
+          />
         </template>
       </UDashboardNavbar>
     </template>
@@ -156,7 +225,11 @@ const pagination = ref({
 
         <!-- 批量删除项目的按钮 -->
         <div class="flex flex-wrap items-center gap-1.5">
-          <CustomersDeleteModal :count="table?.tableApi?.getFilteredSelectedRowModel().rows.length">
+          <ProjectsDeleteModal
+            :count="table?.tableApi?.getFilteredSelectedRowModel().rows.length"
+            :ids="table?.tableApi?.getFilteredSelectedRowModel().rows.map(row => row.original.project_id)"
+            @refresh="refresh"
+          >
             <UButton
               v-if="table?.tableApi?.getFilteredSelectedRowModel().rows.length"
               label="Delete"
@@ -170,7 +243,7 @@ const pagination = ref({
                 </UKbd>
               </template>
             </UButton>
-          </CustomersDeleteModal>
+          </ProjectsDeleteModal>
         </div>
       </div>
 

@@ -1,6 +1,6 @@
 import { db } from './index'
 import { projects } from './schema'
-import { eq, desc } from 'drizzle-orm'
+import { eq, desc, inArray } from 'drizzle-orm'
 
 /** 查询所有项目 */
 export async function getAllProjects() {
@@ -26,6 +26,15 @@ export async function addProject(projectData: {
   }
 }
 
+/** 删除一个或多个项目 */
+export async function deleteProject(project_id: number | number[]) {
+  if (Array.isArray(project_id)) {
+    return await db.delete(projects).where(inArray(projects.project_id, project_id))
+  } else {
+    return await db.delete(projects).where(eq(projects.project_id, project_id))
+  }
+}
+
 /** 修改一个项目 */
 export async function updateProject(project_id: number, data: Partial<{
   project_name: string
@@ -37,9 +46,4 @@ export async function updateProject(project_id: number, data: Partial<{
   remark?: string
 }>) {
   return await db.update(projects).set(data).where(eq(projects.project_id, project_id))
-}
-
-/** 删除一个项目 */
-export async function deleteProject(project_id: number) {
-  return await db.delete(projects).where(eq(projects.project_id, project_id))
 }

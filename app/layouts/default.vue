@@ -15,6 +15,14 @@ const links = [
     }
   },
   {
+    label: 'Projects',
+    icon: 'i-uil-folder',
+    to: '/projects',
+    onSelect: () => {
+      open.value = false
+    }
+  },
+  {
     label: 'Customers',
     icon: 'i-lucide-users',
     to: '/customers',

@@ -58,3 +58,14 @@ export interface Range {
   start: Date
   end: Date
 }
+
+export interface Project {
+  project_id: number
+  project_name: string
+  frontend_developer?: string
+  backend_developer?: string
+  domain_options?: string[]
+  ad_slot_options?: string[]
+  repo?: string
+  remark?: string
+}

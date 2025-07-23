@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { TableColumn } from '@nuxt/ui'
+import { upperFirst } from 'scule'
 import { getPaginationRowModel } from '@tanstack/table-core'
 import type { Row } from '@tanstack/table-core'
 import { deleteProject } from '~/api/projects'
@@ -12,18 +13,21 @@ const UCheckbox = resolveComponent('UCheckbox')
 const ULink = resolveComponent('ULink')
 const toast = useToast()
 
+/** 表格实例 */
 const table = useTemplateRef('table')
 
+/** 列过滤 */
 const columnFilters = ref([{
   id: 'project_name',
   value: ''
 }])
 
-const columnVisibility = ref()
-const rowSelection = ref({})
-const editModal = ref(false)
-const selectedProject = ref<Project>({} as Project)
+const columnVisibility = ref() // 列可见性
+const rowSelection = ref({}) // 行选择
+const editModal = ref(false) // 编辑模态框
+const selectedProject = ref<Project>({} as Project) // 选中的项目
 
+/** 请求数据 */
 const { data, status, error, refresh } = await useFetch<Project[]>('/api/project/list', {
   lazy: true
 })
@@ -31,6 +35,7 @@ if (error.value) {
   toast.add({ title: 'Error', description: error.value.data.message, color: 'error' })
 }
 
+/** 操作列项目 */
 function getRowItems(row: Row<Project>) {
   return [
     {
@@ -88,7 +93,22 @@ const columns: TableColumn<Project>[] = [
   // 项目名称
   {
     accessorKey: 'project_name',
-    header: '项目名称',
+    header: ({ column }) => {
+      const isSorted = column.getIsSorted()
+
+      return h(UButton, {
+        color: 'neutral',
+        variant: 'ghost',
+        label: '项目名称',
+        icon: isSorted
+          ? isSorted === 'asc'
+            ? 'i-lucide-arrow-up-narrow-wide'
+            : 'i-lucide-arrow-down-wide-narrow'
+          : 'i-lucide-arrow-up-down',
+        class: '-mx-2.5',
+        onClick: () => column.toggleSorting(column.getIsSorted() === 'asc')
+      })
+    },
     meta: {
       class: {
         th: 'min-w-[100px]'
@@ -121,6 +141,11 @@ const columns: TableColumn<Project>[] = [
       return h('div', { class: 'flex gap-1 flex-wrap' }, options.map(opt =>
         h(UBadge, { variant: 'subtle', color: 'secondary' }, () => opt)
       ))
+    },
+    meta: {
+      class: {
+        th: 'min-w-[120px]'
+      }
     }
   },
   // 仓库地址
@@ -136,17 +161,32 @@ const columns: TableColumn<Project>[] = [
         target: '_blank',
         class: 'underline font-bold'
       }, () => displayText)
+    },
+    meta: {
+      class: {
+        th: 'min-w-[100px]'
+      }
     }
   },
   // 前端开发负责人
   {
     accessorKey: 'frontend_developer',
-    header: '前端'
+    header: '前端',
+    meta: {
+      class: {
+        th: 'min-w-[70px]'
+      }
+    }
   },
   // 后端开发负责人
   {
     accessorKey: 'backend_developer',
-    header: '后端'
+    header: '后端',
+    meta: {
+      class: {
+        th: 'min-w-[70px]'
+      }
+    }
   },
   // 备注
   {
@@ -186,6 +226,20 @@ const columns: TableColumn<Project>[] = [
   }
 ]
 
+/** 列名称映射 */
+const COLUMNS_MAP = {
+  select: '选择',
+  project_name: '项目名称',
+  domain_options: '域名配置',
+  ad_slot_options: '广告位配置',
+  repo: '仓库地址',
+  frontend_developer: '前端',
+  backend_developer: '后端',
+  remark: '备注',
+  actions: '操作'
+}
+
+/** 分页 */
 const pagination = ref({
   pageIndex: 0,
   pageSize: 10
@@ -223,7 +277,7 @@ const pagination = ref({
           @update:model-value="table?.tableApi?.getColumn('project_name')?.setFilterValue($event)"
         />
 
-        <!-- 批量删除项目的按钮 -->
+        <!-- 批量删除项目的按钮；显示/隐藏列 -->
         <div class="flex flex-wrap items-center gap-1.5">
           <ProjectsDeleteModal
             :count="table?.tableApi?.getFilteredSelectedRowModel().rows.length"
@@ -244,6 +298,32 @@ const pagination = ref({
               </template>
             </UButton>
           </ProjectsDeleteModal>
+          <UDropdownMenu
+            :items="
+              table?.tableApi
+                ?.getAllColumns()
+                .filter((column) => column.getCanHide())
+                .map((column) => ({
+                  label: COLUMNS_MAP[column.id as keyof typeof COLUMNS_MAP],
+                  type: 'checkbox' as const,
+                  checked: column.getIsVisible(),
+                  onUpdateChecked(checked: boolean) {
+                    table?.tableApi?.getColumn(column.id)?.toggleVisibility(!!checked)
+                  },
+                  onSelect(e?: Event) {
+                    e?.preventDefault()
+                  }
+                }))
+            "
+            :content="{ align: 'end' }"
+          >
+            <UButton
+              label="展示列"
+              color="neutral"
+              variant="outline"
+              trailing-icon="i-uil-setting"
+            />
+          </UDropdownMenu>
         </div>
       </div>
 

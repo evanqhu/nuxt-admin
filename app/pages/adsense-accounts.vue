@@ -191,12 +191,12 @@ const pagination = ref({
 <template>
   <UDashboardPanel id="adsense-accounts">
     <template #header>
-      <UDashboardNavbar title="广告账户">
+      <UDashboardNavbar title="广告账号">
         <template #leading>
           <UDashboardSidebarCollapse />
         </template>
 
-        <!-- 新增账户 -->
+        <!-- 新增账号 -->
         <template #right>
           <AdsenseAddModal @refresh="refresh" />
           <AdsenseEditModal
@@ -219,7 +219,7 @@ const pagination = ref({
           @update:model-value="table?.tableApi?.getColumn('account_name')?.setFilterValue($event)"
         />
 
-        <!-- 批量删除账户的按钮；显示/隐藏列 -->
+        <!-- 批量删除账号的按钮；显示/隐藏列 -->
         <div class="flex flex-wrap items-center gap-1.5">
           <AdsenseDeleteModal
             :count="table?.tableApi?.getFilteredSelectedRowModel().rows.length"
